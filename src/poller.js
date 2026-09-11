@@ -15,7 +15,7 @@ async function checkOne(service) {
 
     const responseMs = Date.now() - startedAt;
     const statusCode = response.status;
-    const ok = statusCode >= 200;
+    const ok = statusCode == 200;
 
     await db.query(
       `insert into checks (service_id, status_code, response_ms, ok, error_text)
