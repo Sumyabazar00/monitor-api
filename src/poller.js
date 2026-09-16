@@ -15,7 +15,7 @@ async function checkOne(service) {
 
     const responseMs = Date.now() - startedAt;
     const statusCode = response.status;
-    const ok = statusCode >= 200;
+    const ok = service.expected_status === statusCode;
 
     await db.query(
       `insert into checks (service_id, status_code, response_ms, ok, error_text)
@@ -41,7 +41,7 @@ async function checkOne(service) {
 
 async function tick() {
   const { rows: services } = await db.query(
-    "select id, name, url from services order by id"
+    "select id, name, expected_status, url from services order by id"
   );
 
   console.log(`Checking ${services.length} services...`);
