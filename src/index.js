@@ -58,7 +58,7 @@ app.get("/api/services/:id/checks", async (request, response) => {
       `select id, status_code, response_ms, ok, error_text, checked_at
        from checks
        where service_id = $1
-       order by checked_at asc
+       order by checked_at desc
        limit 20`,
       [request.params.id]
     );
