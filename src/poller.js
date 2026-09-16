@@ -41,7 +41,7 @@ async function checkOne(service) {
 
 async function tick() {
   const { rows: services } = await db.query(
-    "select id, name, url from services order by id"
+    "select id, name, expected_status, url from services order by id"
   );
 
   console.log(`Checking ${services.length} services...`);
