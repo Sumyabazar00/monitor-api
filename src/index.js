@@ -75,8 +75,8 @@ app.get("/api/services/:id/uptime", async (request, response) => {
     const { rows } = await db.query(
       `select
          count(*)  as total_checks,
-         count(ok) as ok_checks,
-         round(100.0 * count(ok) / nullif(count(*), 0), 1) as uptime_percent
+         count(*) filter (where ok) as ok_checks,
+         round(100.0 * count(*) filter (where ok) / nullif(count(*), 0), 1) as uptime_percent
        from checks
        where service_id = $1
          and checked_at > now() - interval '24 hours'`,
