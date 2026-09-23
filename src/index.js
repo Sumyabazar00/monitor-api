@@ -99,7 +99,7 @@ app.get("/api/services/:id", async (request, response) => {
     if (isNaN(request.params.id)) {
       return response.status(400).json({ error: "Invalid service id" });
     }
-    const { rows } = await db.query(
+    const { rows } = await db.query(    
       `select id, name, url, expected_status
        from services
        where id = $1`,
@@ -111,6 +111,37 @@ app.get("/api/services/:id", async (request, response) => {
     return response.json(rows[0]);
   } catch (error) {
     console.error("GET /api/services/:id failed:", error.message);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+app.use(express.json());
+app.post("/api/services", async (request, response) => {
+  try {
+    const { name, url } = request.body;
+
+    if (!name || !url || name.trim() === "" || url.trim() === "") {
+      return response.status(400).json({
+        error: "Name and URL are required",
+      });
+    }
+
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return response.status(400).json({
+        error: "URL must start with http:// or https://",
+      });
+    }
+
+    const { rows } = await db.query(
+      `insert into services (name, url)
+       values ($1, $2)
+       returning id, name, url, expected_status`,
+      [name, url]
+    );
+
+    return response.status(201).json(rows[0]);
+  } catch (error) {
+    console.error("POST /api/services failed:", error.message);
     response.status(500).json({ error: error.message });
   }
 });
