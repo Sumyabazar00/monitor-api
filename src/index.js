@@ -93,3 +93,24 @@ app.listen(PORT, () => {
   console.log(`Monitor API listening on http://localhost:${PORT}`);
   startPolling(CHECK_INTERVAL_MS);
 });
+
+app.get("/api/services/:id", async (request, response) => {
+  try {
+    if (isNaN(request.params.id)) {
+      return response.status(400).json({ error: "Invalid service id" });
+    }
+    const { rows } = await db.query(
+      `select id, name, url, expected_status
+       from services
+       where id = $1`,
+      [request.params.id]
+    );
+    if (rows.length === 0) {
+      return response.status(404).json({ error: "Service not found" });
+    }
+    return response.json(rows[0]);
+  } catch (error) {
+    console.error("GET /api/services/:id failed:", error.message);
+    response.status(500).json({ error: error.message });
+  }
+});
