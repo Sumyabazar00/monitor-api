@@ -145,3 +145,24 @@ app.post("/api/services", async (request, response) => {
     response.status(500).json({ error: error.message });
   }
 });
+
+app.get("/api/summary", async (request, response) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT
+        s.id,
+        s.name,
+        COUNT(c.id) AS total_checks,
+        COUNT(c.id) FILTER (WHERE c.ok = false) AS failed_checks
+      FROM services s
+      LEFT JOIN checks c ON c.service_id = s.id
+      GROUP BY s.id, s.name
+      ORDER BY s.id;`
+    );
+
+    response.json(rows);
+  } catch (error) {
+    console.error("GET /api/summary:", error.message);
+    response.status(500).json({ error: error.message });
+  }
+});
