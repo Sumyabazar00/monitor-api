@@ -72,15 +72,26 @@ app.get("/api/services/:id/checks", async (request, response) => {
 // What share of the last 24 hours of checks came back healthy?
 app.get("/api/services/:id/uptime", async (request, response) => {
   try {
+    const hours = request.query.hours === undefined
+      ? 24
+      : Number(request.query.hours);
+    if (!Number.isInteger(hours) || hours < 1 || hours > 168) {
+      return response.status(400).json({
+        error: "hours must be an integer between 1 and 168",
+      });
+    }
     const { rows } = await db.query(
       `select
-         count(*)  as total_checks,
+         count(*) as total_checks,
          count(*) filter (where ok) as ok_checks,
-         round(100.0 * count(*) filter (where ok) / nullif(count(*), 0), 1) as uptime_percent
+         round(
+           100.0 * count(*) filter (where ok) / nullif(count(*), 0),
+           1
+         ) as uptime_percent
        from checks
        where service_id = $1
-         and checked_at > now() - interval '24 hours'`,
-      [request.params.id]
+         and checked_at > now() - make_interval(hours => $2)`,
+      [request.params.id, hours]
     );
     response.json(rows[0]);
   } catch (error) {
@@ -88,6 +99,7 @@ app.get("/api/services/:id/uptime", async (request, response) => {
     response.status(500).json({ error: error.message });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Monitor API listening on http://localhost:${PORT}`);
